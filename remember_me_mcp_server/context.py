@@ -114,15 +114,24 @@ class Rule(PersistentResource):
             {"policy": row[0], self.resource_name: row[1]}
             for row in cursor.fetchall()]
 
-    def remove(self, context: str, rule: str) -> str:
+    def remove(self, context: str, rule: str, policy: str = None) -> str:
         cursor = self.db.cursor()
-        if context is None:
-            cursor.execute("SELECT policy FROM rules WHERE rule = ? AND context IS NULL", (rule,))
+        # First check if the rule exists
+        if policy:
+            # Check with specific policy
+            if context is None:
+                cursor.execute("SELECT policy FROM rules WHERE rule = ? AND policy = ? AND context IS NULL", (rule, policy))
+            else:
+                cursor.execute("SELECT policy FROM rules WHERE rule = ? AND policy = ? AND context = ?", (rule, policy, context))
         else:
-            cursor.execute("SELECT policy FROM rules WHERE rule = ? AND context = ?", (rule, context))
+            # Check without policy constraint
+            if context is None:
+                cursor.execute("SELECT policy FROM rules WHERE rule = ? AND context IS NULL", (rule,))
+            else:
+                cursor.execute("SELECT policy FROM rules WHERE rule = ? AND context = ?", (rule, context))
         result = cursor.fetchone()
         if not result:
-            raise ResourceError(f"Rule '{rule}' not found with the specified context")
+            raise ResourceError(f"Rule '{rule}'{f' with policy {policy}' if policy else ''} not found with the specified context")
         if context is None:
             cursor.execute("DELETE FROM rules WHERE rule = ? AND context IS NULL", (rule,))
         else:
