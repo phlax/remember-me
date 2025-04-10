@@ -21,7 +21,6 @@ from remember_me_mcp_server.backup import Backup
 from remember_me_mcp_server.context import MyContext
 from remember_me_mcp_server.errors import BackupError, ResourceError
 
-ALLOWED_RESOURCES = ("rule", "snippet", "summary")
 MY_CONTEXT_DB_PATH = "/tmp/me/my.db"
 MY_CONTEXT_BACKUP_PATH = "~/.mcp/me/backups"
 
@@ -57,7 +56,7 @@ async def my_context_list_resource(context: str, resource: str) -> list[dict]:
     action = None
     if ":" in resource:
         resource, action = resource.split(":")
-    if resource not in ALLOWED_RESOURCES:
+    if resource not in dict(MyContext.resource_types):
         raise ResourceError(f"Unrecognized resource type: {resource}")
     return my[resource].list(context, include_content=action == "all")
 
@@ -65,7 +64,7 @@ async def my_context_list_resource(context: str, resource: str) -> list[dict]:
 @mcp.resource("my://{context}/{resource}/{key}")
 async def my_context_get_resource(context: str, resource: str, key: str) -> dict[str, str]:
     """My snippets"""
-    if resource not in ALLOWED_RESOURCES:
+    if resource not in dict(MyContext.resource_types):
         raise ResourceError(f"Unrecognized resource type: {resource}")
     content, mime_type = my[resource].get(context, key)
     return dict(content=content, mime_type=mime_type)
