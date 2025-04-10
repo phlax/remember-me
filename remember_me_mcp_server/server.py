@@ -1,21 +1,10 @@
-import argparse
-import asyncio
-import base64
-import collections
-import hashlib
 import json
-import os
 import pathlib
-import re
-import signal
-import sys
-import tempfile
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
-from mcp.server.fastmcp import Context, Image, FastMCP
-from mcp.server.fastmcp.prompts import base
+from mcp.server.fastmcp import Context, FastMCP
 
 from remember_me_mcp_server.backup import Backup
 from remember_me_mcp_server.context import MyContext
@@ -31,6 +20,7 @@ ResultDict = dict[str, str | bool | dict]
 class AppContext:
     backup: Backup
     my: MyContext
+
 
 # TODO: re/move this once resource contexts are fixed
 my = MyContext(MY_CONTEXT_DB_PATH)
@@ -78,14 +68,14 @@ async def my_context(ctx: Context, extra_context: list[str] | None = None) -> Re
 
     This MUST always be loaded when working with me.
     """
-    rules = await ctx.read_resource(f"my://me/rule")
+    rules = await ctx.read_resource("my://me/rule")
     for extra in (extra_context or []):
         rules += await ctx.read_resource(f"my://{extra}/rule")
     result = []
     for c in rules:
         for rule in json.loads(c.content):
             result.append(f"{rule['policy']}: {rule['rule']}")
-    summary = await ctx.read_resource(f"my://me/summary:all")
+    summary = await ctx.read_resource("my://me/summary:all")
     summary_result = []
     for c in summary:
         for _summary in json.loads(c.content):
@@ -97,7 +87,7 @@ async def my_context(ctx: Context, extra_context: list[str] | None = None) -> Re
             for _summary in json.loads(c.content):
                 _summary["context"] = extra
                 summary_result.append(_summary)
-    snippet = await ctx.read_resource(f"my://me/snippet")
+    snippet = await ctx.read_resource("my://me/snippet")
     snippet_result = []
     for c in snippet:
         for _snippet in json.loads(c.content):
@@ -117,7 +107,7 @@ async def my_context(ctx: Context, extra_context: list[str] | None = None) -> Re
             summary=summary_result))
 
 
-## SNIPPETS
+# SNIPPETS
 
 @mcp.tool()
 async def my_context_snippet_get(
@@ -211,7 +201,7 @@ async def my_context_snippet_set(
         return dict(success=False, error=str(e))
 
 
-## Summary
+# Summary
 
 @mcp.tool()
 async def my_context_summary_get(
@@ -306,7 +296,7 @@ async def my_context_summary_set(
         return dict(success=False, error=str(e))
 
 
-## Rules
+# Rules
 
 @mcp.tool()
 async def my_context_rule_list(
@@ -354,7 +344,7 @@ async def my_context_rule_set(
         return dict(success=False, error=str(e))
 
 
-## Backups
+# Backups
 
 
 @mcp.tool()

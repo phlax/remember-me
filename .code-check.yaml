@@ -1,0 +1,27 @@
+# Configuration for envoy.code.check
+ignores:
+  # Add any files or directories you want to exclude from linting
+  - ".git"
+  - "__pycache__"
+  - "*.pyc"
+  - "venv"
+  - ".venv"
+
+# Lint configuration
+lint:
+  enable:
+    - flake8
+    - isort
+    - black
+  
+  # Define specific settings for each tool
+  settings:
+    flake8:
+      max-line-length: 100
+      exclude: ['venv', '.venv', '__pycache__']
+    isort:
+      line_length: 100
+      multi_line_output: 3
+      include_trailing_comma: true
+    black:
+      line-length: 100
