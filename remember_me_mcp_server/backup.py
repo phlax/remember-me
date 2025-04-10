@@ -28,7 +28,7 @@ class Backup:
         for path in paths:
             path.unlink()
 
-    def create(self, name: str | None = None) -> None:
+    def create(self, name: str | None = None) -> str:
         name = name or time.time_ns()
         backup_path = self.path / f"{name}.{self.target_path.name}"
         if backup_path.exists():
@@ -48,5 +48,5 @@ class Backup:
     def restore(self, name: str) -> None:
         backup_path = self.path / f"{name}.{self.target_path.name}"
         if not backup_path.exists():
-            raise BackupError(f"Backup doesnt exist: {name}")
+            raise BackupError(f"Backup does not exist: {name}")
         shutil.copy(backup_path, self.target_path)

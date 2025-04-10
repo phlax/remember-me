@@ -1,5 +1,3 @@
-
-
 class BackupError(Exception):
     pass
 
