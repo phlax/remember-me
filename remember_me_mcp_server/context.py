@@ -40,12 +40,14 @@ class PersistentResource:
             include_content=False
     ) -> list[dict]:
         cursor = self.db.cursor()
-        cursor.execute(*
-            (f"SELECT key, type, {self.resource_name} FROM {self.resource_table} WHERE context = ?",
-             (context,))
-            if include_content
-            else (f"SELECT key, type FROM {self.resource_table} WHERE context = ?",
-                  (context,)))
+        if include_content:
+            cursor.execute(
+                f"SELECT key, type, {self.resource_name} FROM {self.resource_table} WHERE context = ?",
+                (context,))
+        else:
+            cursor.execute(
+                f"SELECT key, type FROM {self.resource_table} WHERE context = ?",
+                (context,))
         return [
             {"key": row[0], "mime_type": row[1], self.resource_name: row[2]}
             if include_content
