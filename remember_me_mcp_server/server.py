@@ -51,16 +51,6 @@ mcp = FastMCP("Me", lifespan=app_lifespan)
 
 # RESOURCES
 
-@mcp.resource("my://{context}")
-async def my_context_resource(context: str) -> str:
-    """My context"""
-    me = MyContext(MY_CONTEXT_DB_PATH)
-    data = me.get(context=context)
-    me.close()
-    json_output = json.dumps(data, indent=4)
-    return json_output
-
-
 @mcp.resource("my://{context}/{resource}")
 async def my_context_list_resource(context: str, resource: str) -> list[dict]:
     """My snippets"""
@@ -89,16 +79,43 @@ async def my_context(ctx: Context, extra_context: list[str] | None = None) -> Re
 
     This MUST always be loaded when working with me.
     """
-    context = await ctx.read_resource(f"my://me/rule")
+    rules = await ctx.read_resource(f"my://me/rule")
     for extra in (extra_context or []):
-        context += await ctx.read_resource(f"my://{extra}/rule")
+        rules += await ctx.read_resource(f"my://{extra}/rule")
     result = []
-    for c in context:
+    for c in rules:
         for rule in json.loads(c.content):
             result.append(f"{rule['policy']}: {rule['rule']}")
+    summary = await ctx.read_resource(f"my://me/summary:all")
+    summary_result = []
+    for c in summary:
+        for _summary in json.loads(c.content):
+            _summary["context"] = "me"
+            summary_result.append(_summary)
+    for extra in (extra_context or []):
+        summary = await ctx.read_resource(f"my://{extra}/summary")
+        for c in summary:
+            for _summary in json.loads(c.content):
+                _summary["context"] = extra
+                summary_result.append(_summary)
+    snippet = await ctx.read_resource(f"my://me/snippet")
+    snippet_result = []
+    for c in snippet:
+        for _snippet in json.loads(c.content):
+            _snippet["context"] = "me"
+            snippet_result.append(_snippet)
+    for extra in (extra_context or []):
+        snippet = await ctx.read_resource(f"my://{extra}/snippet")
+        for c in snippet:
+            for _snippet in json.loads(c.content):
+                _snippet["context"] = extra
+                snippet_result.append(_snippet)
     return dict(
         success=True,
-        data=dict(rules=result))
+        data=dict(
+            rules=result,
+            snippet=snippet_result,
+            summary=summary_result))
 
 
 ## SNIPPETS
