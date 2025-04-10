@@ -329,12 +329,24 @@ async def my_context_rule_list(
 async def my_context_rule_remove(
         rule: str,
         ctx: Context,
-        context: str | None = "me") -> str:
-    """Remove context rule for working with me"""
+        context: str | None = "me",
+        policy: str | None = None) -> str:
+    """Remove context rule for working with me
+    
+    Args:
+        rule: Rule text to remove
+        context: Context the rule is stored within (default: "me")
+        policy: Optional policy to specify when multiple rules with same text exist
+    """
     try:
+        # Parse combined format if present
+        if policy is None and ": " in rule:
+            policy, rule = rule.split(": ", 1)
+            
         return dict(
             success=True,
-            data=ctx.request_context.lifespan_context.my["rule"].remove(context or "me", rule))
+            data=ctx.request_context.lifespan_context.my["rule"].remove(
+                context or "me", rule, policy))
     except ResourceError as e:
         return dict(success=False, error=str(e))
 
